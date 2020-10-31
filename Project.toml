@@ -1,0 +1,13 @@
+name = "AlgRemez"
+uuid = "4ab3d27f-aed0-4fc4-ab1c-f33961253d0d"
+authors = ["Yuki Nagai"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
