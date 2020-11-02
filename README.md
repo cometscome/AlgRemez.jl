@@ -17,6 +17,14 @@ program, is quite difficult to get completely correct, e.g., the Maple implement
 correct answer.
 
 # How to use
+## Install: 
+Add ] and install as follows
+```
+add https://github.com/cometscome/AlgRemez.jl
+```
+
+## how to use
+
 There are only two functions, calc_coefficients and fittedfunction. 
 You can get coefficients as follows.
 
