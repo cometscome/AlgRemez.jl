@@ -5,7 +5,7 @@
 [![Coverage](https://coveralls.io/repos/github/cometscome/AlgRemez.jl/badge.svg?branch=master)](https://coveralls.io/github/cometscome/AlgRemez.jl?branch=master)
 
 
-AlgRemez.jl is a Julia wrapper for AlgRemez written in c++. 
+AlgRemez.jl is a Julia wrapper for AlgRemez written in c++.  
 
     Please see,
 
