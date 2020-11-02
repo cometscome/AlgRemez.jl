@@ -7,7 +7,7 @@ julia:
   - 1.5
   - nightly
 os:
-  - linux
+  - linux 
   - osx
   - windows
 arch:
