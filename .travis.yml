@@ -7,7 +7,7 @@ julia:
   - 1.5
   - nightly
 os:
-  - linux 
+  - linux
   - osx
   - windows
 arch:
@@ -19,6 +19,15 @@ jobs:
   fast_finish: true
   allow_failures:
     - julia: nightly
+  include:
+    - stage: Documentation
+      julia: 1
+      script: |
+        julia --project=docs -e '
+          using Pkg
+          Pkg.develop(PackageSpec(path=pwd()))
+          Pkg.instantiate()'
+      after_success: skip
 after_success:
   - |
     julia -e '
