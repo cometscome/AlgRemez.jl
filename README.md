@@ -13,7 +13,7 @@ AlgRemez.jl is a Julia wrapper for AlgRemez written in c++.
 
     
 >The archive downloadable here contains an implementation of the Remez algorithm which calculates optimal rational (and polynomial) approximations to the nth root over a given spectral range.  The Remez algorithm, although in principle is extremely straightforward to
-program, is quite difficult to get completely correct, e.g., the Maple implementation of the algorithm does not always converge to the
+program, is quite difficult to get completely correct, e.g., the Maple implementation of the algorithm does not always converge to the 
 correct answer.
 
 # How to use
