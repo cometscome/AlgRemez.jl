@@ -3,7 +3,7 @@ language: julia
 notifications:
   email: false
 julia:
-  - 1.3
+  - 1.0
   - 1.5
   - nightly
 os:
@@ -26,7 +26,11 @@ jobs:
         julia --project=docs -e '
           using Pkg
           Pkg.develop(PackageSpec(path=pwd()))
-          Pkg.instantiate()'
+          Pkg.instantiate()
+          using Documenter: doctest
+          using AlgRemez
+          doctest(AlgRemez)
+          include("docs/make.jl")'
       after_success: skip
 after_success:
   - |
