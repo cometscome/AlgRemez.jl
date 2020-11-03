@@ -1,7 +1,4 @@
 # Documentation: http://docs.travis-ci.com/user/languages/julia
-- name: Julia TagBot
-  uses: JuliaRegistries/TagBot@v1.10.0
-
 language: julia
 notifications:
   email: false
