@@ -1,17 +1,21 @@
 name = "AlgRemez"
-uuid = "4ab3d27f-aed0-4fc4-ab1c-f33961253d0d"
-authors = ["Yuki Nagai"]
+uuid = "12fcd701-c184-4ee5-aece-092528ad8aba"
+authors = ["Yuki Nagai and contributors"]
 version = "0.1.0"
 
 [deps]
-AlgRemez_jll = "acb6dc63-88f0-54c7-a126-ccdc963b8b3f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [compat]
-julia = "1.5"
-AlgRemez_jll = "0.1"
+AlgRemez_jll = "0.1.1"
+LinearAlgebra = "1.10"
+Printf = "1.10"
+julia = "1.10"
 
 [extras]
+AlgRemez_jll = "acb6dc63-88f0-54c7-a126-ccdc963b8b3f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["AlgRemez_jll", "Test"]

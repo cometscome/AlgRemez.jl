@@ -1,4 +1,7 @@
-*.jl.*.cov
+/Manifest.toml
+/approx.dat
+/error.dat
+/coverage/
+/docs/build/
 *.jl.cov
 *.jl.mem
-/Manifest.toml

@@ -1,104 +1,226 @@
 # AlgRemez.jl
 
-[![Build Status](https://travis-ci.org/cometscome/AlgRemez.jl.svg?branch=master)](https://travis-ci.org/cometscome/AlgRemez.jl)
-[![Coverage](https://codecov.io/gh/cometscome/AlgRemez.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/cometscome/AlgRemez.jl)
-[![Coverage](https://coveralls.io/repos/github/cometscome/AlgRemez.jl/badge.svg?branch=master)](https://coveralls.io/github/cometscome/AlgRemez.jl?branch=master) 
+`AlgRemez.jl` computes arbitrary-precision rational minimax approximations for
+positive real functions of the form
 
-
-AlgRemez.jl is a Julia wrapper for AlgRemez written in c++.  
-
-    Please see,
-
-    https://github.com/maddyscientist/AlgRemez
-
-    
->The archive downloadable here contains an implementation of the Remez algorithm which calculates optimal rational (and polynomial) approximations to the nth root over a given spectral range.  The Remez algorithm, although in principle is extremely straightforward to
-program, is quite difficult to get completely correct, e.g., the Maple implementation of the algorithm does not always converge to the 
-correct answer.
-
-# How to use
-## Install: 
-Add ] and install as follows
-```
-add https://github.com/cometscome/AlgRemez.jl
+```text
+x^(y/z) * exp(sum(a[j] * x^k[j]))
 ```
 
-## how to use
+It is a native Julia port of the AlgRemez implementation by M. A. Clark and
+A. D. Kennedy. The default compatibility path reproduces the original Remez
+exchange, root-finding, and partial-fraction algorithms. A separately refined
+algorithm is also available. The public package contains no C or C++ source and
+does not compile native code; `AlgRemez_jll` is used only by the test suite as a
+reference executable.
 
-There are only two functions, calc_coefficients and fittedfunction. 
-You can get coefficients as follows.
+The name follows the historical AlgRemez program and `AlgRemez_jll`. This
+package is distinct from the registered `Remez.jl`: its compatibility API,
+rational partial fractions, and tests are designed for the RHMC workflow.
+
+The package is intended in particular for Rational Hybrid Monte Carlo (RHMC),
+where an approximation is applied as
+
+```text
+α0 * b + sum(α[i] * (A + β[i]I)^(-1) * b)
+```
+
+All generated RHMC shifts are tested for positivity on the supported production
+profiles.
+
+## Installation
+
+After registration in the Julia General registry:
 
 ```julia
-y = 1
-z = 2
-n = 5
-lambda_low = 0.0004
-lambda_high = 64
-coeff_plus,coeff_minus = AlgRemez.calc_coefficients(y,z,n,lambda_low,lambda_high)
-println(coeff_plus.α0)
-println(coeff_plus.α)
-println(coeff_plus.β)
-
-println(coeff_minus.α0)
-println(coeff_minus.α)
-println(coeff_minus.β)
-
-funcplus = AlgRemez.fittedfunction(coeff_plus)
-println("1: sqrt(x)")
-println("Approximated value at x=0.1: ",funcplus(0.1))
-println("Exact value at x=0.1: ", sqrt(0.1))
-
-funcminus = AlgRemez.fittedfunction(coeff_minus)
-println("2: 1/sqrt(x)")
-println("Approximated value at x=0.1: ",funcminus(0.1))
-println("Exact value at x=0.1: ", 1/sqrt(0.1))
-
-y = 1
-z = 4
-n = 5
-lambda_low = 0.0004
-lambda_high = 64
-println("The order is $n")
-coeff_plus,coeff_minus = AlgRemez.calc_coefficients(y,z,n,lambda_low,lambda_high)
-println(coeff_plus.α)
-println(coeff_plus.β)
-
-
-funcplus = AlgRemez.fittedfunction(coeff_plus)
-println("3: x^($y/$z)")
-println("Approximated value at x=0.1: ",funcplus(0.1))
-println("Exact value at x=0.1: ", 0.1^(y/z))
-
-funcminus = AlgRemez.fittedfunction(coeff_minus)
-println("4: x^(-$y/$z)")
-println("Approximated value at x=0.1: ",funcminus(0.1))
-println("Exact value at x=0.1: ", 0.1^(-y/z))
+import Pkg
+Pkg.add("AlgRemez")
 ```
 
-## two functions
+Before registration, install a checked-out copy or its Git URL:
 
 ```julia
-    """
-Output: coeff_plus::AlgRemez_coeffs,coeff_minus::AlgRemez_coeffs
-struct AlgRemez_coeffs
-    α0::Float64
-    α::Array{Float64,1}
-    β::Array{Float64,1}
-    n::Int64
-end
-f(x) = x^(y/z) = coeff_plus.α0 + sum_i^n coeff_plus.α[i]/(x + coeff_plus.β[i])
-f(x) = x^(-y/z) = coeff_minus.α0 + sum_i^n coeff_minus.α[i]/(x + coeff_minus.β[i])
-
-The function to be approximated f(x) = x^(y/z) and f(x) = x^(-y/z), 
-with degree (n,n) over the spectral range [lambda_low,lambda_high],
-using precision digits of precision in the arithmetic. 
-The parameters y and z must be positive, the approximation to f(x) = x^(-y/z) is simply
-the inverse of the approximation to f(x) = x^(y/z).
-The default value of precision is 42. 
-    """
-    function calc_coefficients(y,z,n,lambda_low,lambda_high;precision=42)
+import Pkg
+Pkg.develop(path="/path/to/AlgRemez.jl")
 ```
+
+AlgRemez requires Julia 1.10 or later.
+
+## RHMC-compatible interface
+
+`calc_coefficients` is a drop-in replacement for the historical
+`AlgRemez_jll` wrapper:
 
 ```julia
-fittedfunction(coeff::AlgRemez_coeffs)
+using AlgRemez
+
+positive, negative = calc_coefficients(
+    1, 16, 15,
+    4.0e-4, 64.0;
+    precision=42,
+)
+
+positive.α0
+positive.α
+positive.β
+positive.n
+
+f = fittedfunction(positive)
+f(0.1)
 ```
+
+The returned approximation has the form
+
+```text
+α0 + sum(α[i] / (x + β[i]), i=1:n)
+```
+
+`positive` approximates `x^(y/z)` and `negative` approximates its reciprocal.
+Their fields are `Float64`, matching the coefficient types expected by
+LatticeQCD and LatticeDiracOperators.
+
+The compatibility API interprets `precision` as decimal digits, as the C++ API
+did. GMP rounds the requested storage to a machine-limb boundary, so
+`precision=42` corresponds to 192 effective bits on a 64-bit host.
+
+## Arbitrary-precision interface
+
+Use `remez` when the polynomial coefficients and error information should
+remain in `BigFloat`:
+
+```julia
+approximation = remez(
+    1, 2, 5, 5,
+    4.0e-4, 64.0;
+    precision=192,       # bits
+    tolerance=1.0e-15,
+)
+
+r = approximation(big"0.1")
+f = target_value(approximation, big"0.1")
+δ = relative_error(approximation, big"0.1")
+
+positive_pfe = partial_fraction(approximation)
+negative_pfe = partial_fraction(approximation; inverse=true)
+```
+
+The main arguments are:
+
+- `y`, `z`: the target exponent `y/z`;
+- `n`, `d`: numerator and denominator degrees;
+- `lower`, `upper`: a strictly positive approximation interval;
+- `precision`: `BigFloat` working precision in bits;
+- `tolerance`: tolerated spread among error extrema.
+
+Equal and unequal numerator/denominator degrees are supported for rational-form
+evaluation. Partial-fraction conversion requires `n == d` and distinct real
+poles. The safe constant case `(n, d) == (0, 0)` is supported.
+
+### Algorithm selection
+
+The default is the original calculation:
+
+```julia
+approximation = remez(args...; algorithm=:legacy)
+pfe = partial_fraction(approximation; algorithm=:legacy)
+```
+
+This path uses the original initial points, scaled-pivot Gaussian elimination,
+bounded ten-step extrema search, relaxation update, Newton deflation, and
+residue construction. It rounds interval bounds through `Float64`, matching the
+C++ interface.
+
+The refined implementation is selected explicitly:
+
+```julia
+approximation = remez(args...; algorithm=:refined, precision=256)
+pfe = partial_fraction(approximation; algorithm=:refined)
+```
+
+It uses logarithmic initial points, golden-section extrema searches, and
+derivative-root isolation. String and `BigFloat` interval endpoints retain
+their full precision in this mode.
+
+### Power times exponential targets
+
+The extended target from the original class is available with parallel arrays:
+
+```julia
+approximation = remez(
+    1, 2, 4, 3,
+    0.01, 10.0;
+    exponential_coefficients=[0.1, -0.02],
+    exponential_powers=[1, -1],
+)
+```
+
+This represents
+`sqrt(x) * exp(0.1x - 0.02/x)`.
+
+## Accuracy and compatibility
+
+The test suite compares every Float64 normalization, residue, and shift from
+the RHMC compatibility API with `AlgRemez_jll`. The cross-platform allowance is
+four ULPs; the current development host differs by at most one ULP. The original
+and Julia implementations also take the same number of Remez iterations in the
+reference cases.
+
+The often quoted maximum relative error `2.550823e-3` belongs to the deliberately
+low degree `(5, 5)` square-root example on the wide interval `[0.0004, 64]`. It
+is a regression value, not a recommended RHMC accuracy. Choose the degree from
+the required approximation error and spectral interval.
+
+The LatticeQCD-oriented tests cover `Nf = 1, 2, 3` for:
+
+- degree-15 action approximations `x^(Nf/16)`;
+- degree-10 molecular-dynamics approximations `x^(Nf/8)`;
+- positive shifted systems;
+- forward/inverse application and round trips;
+- negative-power coefficient dispatch.
+
+## Command-line compatibility
+
+The original seven-argument interface and output files are available through:
+
+```sh
+julia --project=. bin/algremez.jl 1 2 5 5 0.0004 64 42
+```
+
+This writes `approx.dat` and `error.dat` in the historical format.
+
+## Testing and benchmarking
+
+Run the complete test suite with:
+
+```sh
+julia --project=. -e 'using Pkg; Pkg.test()'
+```
+
+Run JIT-warmed coefficient-generation benchmarks with:
+
+```sh
+julia --project=. benchmark/rhmc.jl
+julia --project=. benchmark/rhmc.jl --all
+```
+
+On the development host, representative Julia/C++ generation times were
+0.47/0.65 seconds for degree 5, 2.70/2.97 seconds for degree 10, and 8.55/8.89
+seconds for degree 15. Timings vary by host and coefficient generation is a
+one-time setup cost rather than a per-trajectory RHMC cost.
+
+More implementation details are in [README_JULIA.md](README_JULIA.md), and the
+original C++ code analysis is available as
+[AlgRemez_analysis.pdf](docs/AlgRemez_analysis.pdf).
+Maintainer release steps are documented in
+[docs/RELEASING.md](docs/RELEASING.md).
+
+## Citation and license
+
+If this software contributes to published work, cite the original AlgRemez
+implementation:
+
+> M. A. Clark and A. D. Kennedy, AlgRemez (2005),
+> <https://github.com/mikeaclark/AlgRemez>.
+
+Please also cite the version of `AlgRemez.jl` used in the calculation. The
+software is distributed under the MIT license; see [LICENSE](LICENSE).
